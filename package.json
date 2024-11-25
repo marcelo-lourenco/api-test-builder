@@ -1,0 +1,89 @@
+{
+  "name": "api-test-builder",
+  "displayName": "API Test Builder",
+  "description": "API Test Script Generator for Playwright, Cypress and others from Swagger documentation or Postman collections.",
+  "version": "0.0.1",
+  "license": "MIT",
+  "author": "Marcelo Lourenço <qabi.dev@gmail.com>",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Testing",
+    "Programming Languages",
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onCommand:swagger-to-playwright.generate",
+    "onLanguage:json"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "swagger-to-playwright.generate",
+        "title": "Swagger to Playwright Test",
+        "category": "Swagger to Playwright",
+        "group": "docApiToText"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "swagger-to-playwright.generate",
+          "when": "resourceExtname == .json",
+          "group": "docApiToText"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "swagger-to-playwright.generate",
+          "when": "editorLangId == json",
+          "group": "docApiToText"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint \"src/**/*.ts\"",
+    "pretest": "npm run compile && npm run lint",
+    "test": "vscode-test",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.9",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^8.10.0",
+    "@typescript-eslint/parser": "^8.7.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.13.0",
+    "typescript": "^5.6.3"
+  },
+  "publisher": "mlourenco",
+  "icon": "logo.png",
+  "galleryBanner": {
+    "color": "#030518",
+    "theme": "dark"
+  },
+  "keywords": [
+    "api",
+    "test",
+    "automation",
+    "playwright",
+    "cypress",
+    "swagger",
+    "postman"
+  ],
+  "repository": {
+    "url": "https://github.com/marcelo-lourenco/api-test-builder"
+  },
+  "homepage": "https://github.com/marcelo-lourenco/api-test-builder",
+  "bugs": {
+    "url": "https://github.com/marcelo-lourenco/api-test-builder/issues"
+  }
+}
