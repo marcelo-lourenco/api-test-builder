@@ -1,4 +1,4 @@
-# Swagger to Playwright Test Generator
+# API Test Script Generator
 
 This Visual Studio Code extension automatically generates Playwright test files from a Swagger (OpenAPI) specification. It simplifies the process of creating end-to-end API tests by parsing your Swagger file and creating ready-to-run Playwright tests for each endpoint.
 

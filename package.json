@@ -14,36 +14,6 @@
     "Other"
   ],
   "main": "./out/extension.js",
-  "activationEvents": [
-    "onCommand:swagger-to-playwright.generate",
-    "onLanguage:json"
-  ],
-  "contributes": {
-    "commands": [
-      {
-        "command": "swagger-to-playwright.generate",
-        "title": "Swagger to Playwright Test",
-        "category": "Swagger to Playwright",
-        "group": "docApiToText"
-      }
-    ],
-    "menus": {
-      "explorer/context": [
-        {
-          "command": "swagger-to-playwright.generate",
-          "when": "resourceExtname == .json",
-          "group": "docApiToText"
-        }
-      ],
-      "editor/context": [
-        {
-          "command": "swagger-to-playwright.generate",
-          "when": "editorLangId == json",
-          "group": "docApiToText"
-        }
-      ]
-    }
-  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
@@ -85,5 +55,63 @@
   "homepage": "https://github.com/marcelo-lourenco/api-test-builder",
   "bugs": {
     "url": "https://github.com/marcelo-lourenco/api-test-builder/issues"
+  },
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "apiTestScript.genSwaggerToPlaywright",
+        "title": "Swagger To Playwright",
+        "group": "apiTestBuilder"
+      },
+      {
+        "command": "apiTestScript.genSwaggerToCypress",
+        "title": "Swagger To Cypress",
+        "group": "apiTestBuilder"
+      },
+      {
+        "command": "apiTestScript.genPostmamToPlaywright",
+        "title": "Postmam To Playwright",
+        "group": "apiTestBuilder"
+      },
+      {
+        "command": "apiTestScript.genPostmamToCypress",
+        "title": "Postmam To Cypress",
+        "group": "apiTestBuilder"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "apiTestBuilder",
+          "when": "editorTextFocus && !editorReadonly",
+          "group": "apiTestBuilder@2"
+        }
+      ],
+      "apiTestBuilder": [
+        {
+          "command": "apiTestScript.genSwaggerToPlaywright",
+          "group": "2_apiTestBuilder@1"
+        },
+        {
+          "command": "apiTestScript.genSwaggerToCypress",
+          "group": "2_apiTestBuilder@2"
+        },
+        {
+          "command": "apiTestScript.genPostmamToPlaywright",
+          "group": "2_apiTestBuilder@3"
+        },
+        {
+          "command": "apiTestScript.genPostmamToCypress",
+          "group": "2_apiTestBuilder@4"
+        }
+      ]
+    },
+    "submenus": [
+      {
+        "id": "apiTestBuilder",
+        "label": "API Test Builder"
+      }
+    ]
   }
 }
