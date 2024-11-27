@@ -6,32 +6,10 @@ import * as vscode from 'vscode';
 function formatarString(str: string): string {
   return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().replace(/\s+/g, "-");
 }
-
-// Function to ensure a directory exists
-async function ensureDirectoryExistence(dir: string, isRoot: boolean = false) {
-  if (!fs.existsSync(dir)) {
-    // Cria o diretório diretamente se não existir
-    fs.mkdirSync(dir, { recursive: true });
-    if (isRoot) {
-      console.log(`Diretório raiz criado: ${dir}`);
-    }
-  } else if (isRoot) {
-    // Para o diretório principal, confirma substituição
-    const overwrite = await vscode.window.showQuickPick(['Sim', 'Não'], {
-      placeHolder: `O diretório principal "${dir}" já existe. Deseja substituí-lo?`
-    });
-
-    if (overwrite === 'Sim') {
-      // Remove e recria o diretório principal
-      fs.rmSync(dir, { recursive: true, force: true });
-      fs.mkdirSync(dir, { recursive: true });
-      console.log(`Diretório principal substituído: ${dir}`);
-    } else {
-      console.log(`Substituição cancelada para o diretório principal: ${dir}`);
-    }
-  }
+// Function to convert the first letter to uppercase
+function firstToUppercase(framework: string) {
+  return framework.charAt(0).toUpperCase() + framework.slice(1);
 }
-
 
 // Function to resolve references ($ref) in Swagger
 function resolveSchemaReferences(swaggerData: any, schema: any): any {
@@ -90,6 +68,38 @@ function getDefaultValueForType(property: any): any {
   }
 }
 
+// Function to confirm and delete the main directory
+async function confirmAndDeleteRootDir(rootDir: string): Promise<boolean> {
+  if (!fs.existsSync(rootDir)) {
+    return true; // Directory doesn't exist, proceed
+  }
+
+  const confirmationMessage = `Caution! Directory already exists. Do you want to replace it? ${rootDir}`;
+
+  vscode.window.showWarningMessage(confirmationMessage);
+
+  const overwrite = await vscode.window.showQuickPick(['Yes', 'No'], {
+    placeHolder: confirmationMessage
+  });
+
+  if (overwrite === 'Yes') {
+    fs.rmSync(rootDir, { recursive: true, force: true });
+    // vscode.window.showInformationMessage(`Directory overridden by user. ${rootDir}`);
+    vscode.window.showInformationMessage(`Creating new directories. Please wait!`);
+    return true; // Proceed after deleting
+  }
+
+  vscode.window.showInformationMessage(`Processing cancelled by user.`);
+  return false; // Cancel processing
+}
+
+// Function to ensure a directory exists
+function ensureDirectoryExistence(dir: string) {
+  if (!fs.existsSync(dir)) {
+    // vscode.window.showInformationMessage(`Creating new directories. Please wait!`);
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
 
 // Function to generate the test script content
 async function generateTestFileContent(
@@ -131,7 +141,7 @@ const endPoint = \`\${baseUrl}\${pathName}\${pathUrl}\`;
         const schema = resolveSchemaReferences(swaggerData, details.requestBody.content[contentType].schema || {});
         const example = schema.example || buildExampleFromSchema(schema);
 
-        requestBodyContent = example ? `${JSON.stringify(example, null, 2)}` : "";
+        requestBodyContent = example ? `${JSON.stringify(example, null, 8)}` : "";
       }
 
       const responseExample =
@@ -143,24 +153,24 @@ const endPoint = \`\${baseUrl}\${pathName}\${pathUrl}\`;
 
       if (testFramework === 'playwright') {
 
-        return `
-  test('${methodUpperCase}: Should return success', async ({ request }) => {
+        return `test('${methodUpperCase}: Should return success', async ({ request }) => {
     const response = await request.${methodLowerCase}(\`\${endPoint}\`, {
-      params: { ${parameters} }${requestBodyContent ? `, data: ${requestBodyContent}` : ""}
+      params: { ${parameters} }${requestBodyContent ?`,
+      data: ${requestBodyContent}` : ""}
     });
-    expect(response.status()).toBe(200);
-    ${responseExample ? `expect(await response.json()).toEqual(${JSON.stringify(responseExample, null, 2)});` : ""}
+    expect(response.status()).toBe(200);${responseExample ?
+    `expect(await response.json()).toEqual(${JSON.stringify(responseExample, null, 2)});` : ""}
   });`;
 
       } else if (testFramework === 'cypress') {
 
-        return `
-  it('${methodUpperCase}: Should return success', () => {
+        return `it('${methodUpperCase}: Should return success', () => {
     cy.${methodLowerCase}(\`\${endPoint}\`, {
-      params: { ${parameters} }${requestBodyContent ? `, body: ${requestBodyContent}` : ""}
+      params: { ${parameters} }${requestBodyContent ? `,
+      body: ${requestBodyContent}` : ""}
     }).then((response) => {
-      expect(response.status).to.eq(200);
-      ${responseExample ? `expect(response.body).to.deep.equal(${JSON.stringify(responseExample, null, 2)});` : ""}
+      expect(response.status).to.eq(200);${responseExample ?
+      `expect(response.body).to.deep.equal(${JSON.stringify(responseExample, null, 2)});` : ""}
     });
   });`;
       }
@@ -188,10 +198,8 @@ describe('${tagName} ${endpointPath}', () => {
   return '';
 }
 
-
 async function processFile(uri: vscode.Uri, data: string, framework: 'playwright' | 'cypress', fileExtension: string, processDataFunc: (data: any) => { baseUrl: string; pathName: string; paths: any; info: any }): Promise<string[]> {
-  const frameworkCapitalized = framework.charAt(0).toUpperCase() + framework.slice(1);
-  vscode.window.showInformationMessage(`Started creating scripts for ${frameworkCapitalized}.`);
+  vscode.window.showInformationMessage(`Started creating scripts for ${firstToUppercase(framework)}.`);
 
   const suffix = {
     playwright: 'test',
@@ -208,9 +216,12 @@ async function processFile(uri: vscode.Uri, data: string, framework: 'playwright
     const rootDir = path.join(jsonDir, formatarString(info.title || info.name));
     generatedFiles.push(`${rootDir}\n`);
 
+    if (!await confirmAndDeleteRootDir(rootDir)) {
+      return []; // Stop processing if user cancels
+    }
+
     // Ensure the existence of the main directory with confirmation
-    // TODO
-    ensureDirectoryExistence(rootDir, true);
+    ensureDirectoryExistence(rootDir);
 
     for (const [endpointPath, methods] of Object.entries(paths)) {
       const tagName = (Object.values(methods as Record<string, any>)[0]?.tags?.[0]) || "untagged";
@@ -234,20 +245,18 @@ async function processFile(uri: vscode.Uri, data: string, framework: 'playwright
   }
 }
 
-
 // Main function of activating the extension
 export function activate(context: vscode.ExtensionContext) {
   console.log('Congratulations, your extension "API Test Builder" is now active!');
 
   const registerCommand = (command: string, framework: 'playwright' | 'cypress', fileExtension: string, processDataFunc: (data: any) => { baseUrl: string; pathName: string; paths: any; info: any }) => {
-    const frameworkCapitalized = framework.charAt(0).toUpperCase() + framework.slice(1);
     const disposable = vscode.commands.registerCommand(command, async (uri: vscode.Uri) => {
       const filePath = uri.fsPath;
       try {
         const data = await fs.promises.readFile(filePath, "utf-8");
         const generatedFiles = await processFile(uri, data, framework, fileExtension, processDataFunc);
         if (generatedFiles.length > 0) {
-          vscode.window.showInformationMessage(`Finished creating scripts for ${frameworkCapitalized}.\nFiles generated in:\n${generatedFiles.join('\n\n')}`);
+          vscode.window.showInformationMessage(`Finished creating scripts for  ${firstToUppercase(framework)}.\nFiles generated in:\n${generatedFiles.join('\n\n')}`);
         }
       } catch (error: unknown) {
         const errorMessage = (error as Error)?.message || "Unknown error";
