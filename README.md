@@ -1,36 +1,29 @@
+
 # API Test Script Generator
 
-This Visual Studio Code extension automatically generates Playwright test files from a Swagger (OpenAPI) specification. It simplifies the process of creating end-to-end API tests by parsing your Swagger file and creating ready-to-run Playwright tests for each endpoint.
-
-## Features
-
-- **Generates Playwright tests**: Creates test files based on your Swagger/OpenAPI definition.
-- Organizes tests by tag: Groups generated tests into folders based on the tags defined in your Swagger file. Untagged endpoints are placed in a folder named untagged.
-- **Handles various HTTP methods**: Supports GET, POST, PUT, DELETE, and other HTTP methods defined in your Swagger file.
-- **Resolves schema references ($ref)**: Correctly handles references within your Swagger schema definitions.
-- **Generates example requests**: Creates example request bodies based on the schema definitions.
-- **Includes basic response assertions**: Adds expect statements to verify the response status code. If a response example is provided in the Swagger, it will be used in an assertion as well.
-- **Clear file structure**: Creates a well-organized directory structure for your tests, making them easy to manage.
-
-## Requirements
-
-- Visual Studio Code: This extension is designed for VS Code.
-- Node.js and npm: Required for installing the extension and running Playwright.
-- Playwright: You'll need to have Playwright installed in your project.
-
-## Installation
-
-- Open Visual Studio Code.
-- Go to the Extensions Marketplace (Ctrl+Shift+X or Cmd+Shift+X).
-- Search for "API Test Builder".
-- Click "Install".
+Automatically generate API Test Scripts for **Playwright** and **Cypress** from Swagger Documentation or a Postman Collection.
 
 ## Usage
 
-1. Open a Swagger (JSON or YAML) file in VS Code.
-2. Right-click on the file in the explorer.
-3. Select "Generate Playwright Tests" from the context menu.
-4. The extension will generate Playwright test files in a directory next to your Swagger file, named after the title of your API in the Swagger.
+1. Open the JSON file (Swagger Documentation or Postman Collection) in VS Code;
+2. **Right-click** anywhere in the code editor;
+3. Click the **API Test Builder** menu;
+4. Click the desired option;
+    - **Swagger to Playwright**
+    - **Swagger to Cypress**
+    - **Postman to Playwright**
+    - **Postman to Cypress**
+5. E *Voilà*! The extension will generate the directories and  tests scripts templates.
+
+## Features
+
+- **Generates tests**: Creates test scripts based on the source specification (Swagger/OpenAPI or Collection Postman)
+- **Organizes tests by tag**: Groups generated tests into folders based on the tags defined in your source file
+- **Handles multiple HTTP methods**: Supports GET, POST, PUT, DELETE, and other HTTP methods defined in your source file.
+- **Resolves schema references ($ref)**: Correctly handles references within your schema definitions.
+- **Generates sample requests**: Creates sample request bodies based on your schema definitions.
+- **Includes basic response assertions**: Adds expect statements to check the response status code.
+- **Clean file structure**: Creates a well-organized directory structure for your tests, making them easy to manage.
 
 ## Configuration
 

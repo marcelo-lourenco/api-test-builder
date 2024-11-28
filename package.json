@@ -70,12 +70,12 @@
         "group": "apiTestBuilder"
       },
       {
-        "command": "apiTestScript.genPostmamToPlaywright",
+        "command": "apiTestScript.genPostmanToPlaywright",
         "title": "Postmam To Playwright",
         "group": "apiTestBuilder"
       },
       {
-        "command": "apiTestScript.genPostmamToCypress",
+        "command": "apiTestScript.genPostmanToCypress",
         "title": "Postmam To Cypress",
         "group": "apiTestBuilder"
       }
@@ -98,11 +98,11 @@
           "group": "2_apiTestBuilder@2"
         },
         {
-          "command": "apiTestScript.genPostmamToPlaywright",
+          "command": "apiTestScript.genPostmanToPlaywright",
           "group": "2_apiTestBuilder@3"
         },
         {
-          "command": "apiTestScript.genPostmamToCypress",
+          "command": "apiTestScript.genPostmanToCypress",
           "group": "2_apiTestBuilder@4"
         }
       ]

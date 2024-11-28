@@ -3,11 +3,11 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 // Function to format strings in safe format for directories
-function formatarString(str: string): string {
+export function formatarString(str: string): string {
   return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().replace(/\s+/g, "-");
 }
 // Function to convert the first letter to uppercase
-function firstToUppercase(framework: string) {
+export function firstToUppercase(framework: string) {
   return framework.charAt(0).toUpperCase() + framework.slice(1);
 }
 
@@ -155,11 +155,11 @@ const endPoint = \`\${baseUrl}\${pathName}\${pathUrl}\`;
 
         return `test('${methodUpperCase}: Should return success', async ({ request }) => {
     const response = await request.${methodLowerCase}(\`\${endPoint}\`, {
-      params: { ${parameters} }${requestBodyContent ?`,
+      params: { ${parameters} }${requestBodyContent ? `,
       data: ${requestBodyContent}` : ""}
     });
     expect(response.status()).toBe(200);${responseExample ?
-    `expect(await response.json()).toEqual(${JSON.stringify(responseExample, null, 2)});` : ""}
+            `expect(await response.json()).toEqual(${JSON.stringify(responseExample, null, 2)});` : ""}
   });`;
 
       } else if (testFramework === 'cypress') {
@@ -170,7 +170,7 @@ const endPoint = \`\${baseUrl}\${pathName}\${pathUrl}\`;
       body: ${requestBodyContent}` : ""}
     }).then((response) => {
       expect(response.status).to.eq(200);${responseExample ?
-      `expect(response.body).to.deep.equal(${JSON.stringify(responseExample, null, 2)});` : ""}
+            `expect(response.body).to.deep.equal(${JSON.stringify(responseExample, null, 2)});` : ""}
     });
   });`;
       }
@@ -266,39 +266,59 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(disposable);
   };
 
-  registerCommand("apiTestScript.genSwaggerToPlaywright", 'playwright', 'ts', (data: any) => ({
-    baseUrl: new URL(data.servers[0].url).origin,
-    pathName: new URL(data.servers[0].url).pathname,
-    paths: data.paths,
-    info: data.info,
-  }));
 
-  registerCommand("apiTestScript.genSwaggerToCypress", 'cypress', 'js', (data: any) => ({
-    baseUrl: new URL(data.servers[0].url).origin,
-    pathName: new URL(data.servers[0].url).pathname,
-    paths: data.paths,
-    info: data.info,
-  }));
+  // Helper function to process Swagger data
+  function extractSwaggerData(data: any): { baseUrl: string; pathName: string; paths: any; info: any } {
+    const baseUrl = new URL(data.servers[0].url).origin;
+    const pathName = new URL(data.servers[0].url).pathname;
+    const paths = data.paths;
+    const info = data.info;
+    return { baseUrl, pathName, paths, info };
+  }
 
-  registerCommand("apiTestScript.genPostmanToPlaywright", 'playwright', 'ts', (data: any) => ({
-    baseUrl: data.info.baseUrl,
-    pathName: '',
-    paths: data.item.reduce((acc: any, item: any) => {
-      acc[item.request.url.path.join('/')] = { [item.request.method.toLowerCase()]: item.request };
-      return acc;
-    }, {}),
-    info: data.info,
-  }));
+  // Helper function to process Postman data
+  function extractPostmanData(data: any): { baseUrl: string; pathName: string; paths: any; info: any } {
+    const baseUrlFull = data.info?.url?.raw || data.variable?.find((variable: any) => variable.key === 'baseUrl')?.value || '';
+    const baseUrl = baseUrlFull ? new URL(baseUrlFull).origin : '';
+    const pathName = baseUrlFull ? new URL(baseUrlFull).pathname : '';
+    const paths: Record<string, Record<string, any>> = {};
+    const info = data.info || {};
 
-  registerCommand("apiTestScript.genPostmanToCypress", 'cypress', 'js', (data: any) => ({
-    baseUrl: data.info.baseUrl,
-    pathName: '',
-    paths: data.item.reduce((acc: any, item: any) => {
-      acc[item.request.url.path.join('/')] = { [item.request.method.toLowerCase()]: item.request };
-      return acc;
-    }, {}),
-    info: data.info,
-  }));
+    function collectionProcessItems(items: any[], currentPath: string = '', currentTag: string = 'Untagged') {
+      items?.forEach(item => {
+        if (item.item) {
+          const folderName = item.name || currentTag;
+          collectionProcessItems(item.item, currentPath ? `${currentPath}/${item.name}` : item.name, folderName);
+        } else if (item.request) {
+          const path = item.request.url.path.join('/');
+          const fullPath = currentPath ? `/${currentPath}${path}` : `/${path}`;
+          paths[fullPath] = paths[fullPath] || {};
+          const methodData = item.request;
+
+          // Adding a tag to categorize endpoints
+          methodData.tags = [currentTag]; // Add as an array for easier Swagger compatibility
+
+          paths[fullPath][item.request.method.toLowerCase()] = methodData;
+        }
+      });
+    }
+
+    collectionProcessItems(data.item || []);
+
+    return { baseUrl, pathName, paths, info };
+  }
+
+
+  // comands to vscode
+  registerCommand("apiTestScript.genSwaggerToPlaywright", 'playwright', 'ts', (data: any) => extractSwaggerData(data));
+
+  registerCommand("apiTestScript.genSwaggerToCypress", 'cypress', 'js', (data: any) => extractSwaggerData(data));
+
+  registerCommand("apiTestScript.genPostmanToPlaywright", 'playwright', 'ts', (data: any) => extractPostmanData(data));
+
+  registerCommand("apiTestScript.genPostmanToCypress", 'cypress', 'js', (data: any) => extractPostmanData(data));
+
+
 }
 
 export function deactivate() { }
