@@ -1,4 +1,4 @@
-# Contributor Covenant Code of Conduct
+# API Test Builder - Code of Conduct
 
 ## Our Pledge
 

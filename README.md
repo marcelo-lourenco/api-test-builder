@@ -1,11 +1,13 @@
 
-# API Test Script Generator
+# API Test Builder - VS Code Extension
 
-Automatically generate API Test Scripts for **Playwright** and **Cypress** from Swagger Documentation or a Postman Collection.
+## API Test Script Generator
+
+Automatically generate API Test Scripts for **Playwright** and **Cypress** from Swagger Documentation.
 
 ## Usage
 
-1. Open the JSON file (Swagger Documentation or Postman Collection) in VS Code;
+1. Open the JSON file (Swagger Documentation) in VS Code;
 2. **Right-click** anywhere in the code editor;
 3. Click the **API Test Builder** menu;
 4. Click the desired option;
@@ -13,11 +15,11 @@ Automatically generate API Test Scripts for **Playwright** and **Cypress** from 
     - **Swagger to Cypress**
     - **Postman to Playwright**
     - **Postman to Cypress**
-5. E *Voilà*! The extension will generate the directories and  tests scripts templates.
+5. *Voilà*! The extension will generate the directories and tests scripts templates.
 
 ## Features
 
-- **Generates tests**: Creates test scripts based on the source specification (Swagger/OpenAPI or Collection Postman)
+- **Generates tests**: Creates test scripts based on the source specification (Swagger/OpenAPI)
 - **Organizes tests by tag**: Groups generated tests into folders based on the tags defined in your source file
 - **Handles multiple HTTP methods**: Supports GET, POST, PUT, DELETE, and other HTTP methods defined in your source file.
 - **Resolves schema references ($ref)**: Correctly handles references within your schema definitions.
@@ -75,4 +77,4 @@ MIT
 
 ---
 
-[Código de Conduta](https://github.com/marcelo-lourenco/api-test-builder?tab=coc-ov-file#readme) • [Licença MIT](https://github.com/marcelo-lourenco/api-test-builder?tab=MIT-1-ov-file#readme) • [Segurança](https://github.com/marcelo-lourenco/api-test-builder/security) • [Changelog](https://github.com/marcelo-lourenco/api-test-builder/blob/master/CHANGELOG.md) • [Fórum](https://github.com/marcelo-lourenco/api-test-builder/discussions)
+[Code of Condut](https://github.com/marcelo-lourenco/api-test-builder?tab=coc-ov-file#readme) • [License MIT](https://github.com/marcelo-lourenco/api-test-builder?tab=MIT-1-ov-file#readme) • [Security](https://github.com/marcelo-lourenco/api-test-builder/security) • [Changelog](https://github.com/marcelo-lourenco/api-test-builder/blob/master/CHANGELOG.md) • [Discussions](https://github.com/marcelo-lourenco/api-test-builder/discussions)

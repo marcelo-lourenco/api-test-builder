@@ -1,7 +1,7 @@
 {
   "name": "api-test-builder",
   "displayName": "API Test Builder",
-  "description": "API Test Script Generator for Playwright, Cypress and others from Swagger documentation or Postman collections.",
+  "description": "API Test Script Generator for Playwright, Cypress and others from Swagger documentation",
   "version": "0.0.1",
   "license": "MIT",
   "author": "Marcelo Lourenço <qabi.dev@gmail.com>",
@@ -68,16 +68,6 @@
         "command": "apiTestScript.genSwaggerToCypress",
         "title": "Swagger To Cypress",
         "group": "apiTestBuilder"
-      },
-      {
-        "command": "apiTestScript.genPostmanToPlaywright",
-        "title": "Postmam To Playwright",
-        "group": "apiTestBuilder"
-      },
-      {
-        "command": "apiTestScript.genPostmanToCypress",
-        "title": "Postmam To Cypress",
-        "group": "apiTestBuilder"
       }
     ],
     "menus": {
@@ -96,14 +86,6 @@
         {
           "command": "apiTestScript.genSwaggerToCypress",
           "group": "2_apiTestBuilder@2"
-        },
-        {
-          "command": "apiTestScript.genPostmanToPlaywright",
-          "group": "2_apiTestBuilder@3"
-        },
-        {
-          "command": "apiTestScript.genPostmanToCypress",
-          "group": "2_apiTestBuilder@4"
         }
       ]
     },
