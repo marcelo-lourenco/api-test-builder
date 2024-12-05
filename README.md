@@ -12,7 +12,7 @@ Automatically generate API Test Scripts for **Playwright** and **Cypress** from 
 
 ## Usage
 
-1. Open the JSON file (Swagger Documentation) in VS Code;
+1. Open the **Swagger Documentation** (JSON file) in VS Code;
 2. **Right-click** anywhere in the code editor;
 3. Click the **API Test Builder** menu;
 4. Click the desired option;

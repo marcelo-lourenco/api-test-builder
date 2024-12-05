@@ -32,19 +32,26 @@ export function extractSwaggerData(data: any): { baseUrl: string; pathName: stri
     }
 
     // Pattern 2: host and pathName together in servers.url
-    if (data.servers?.[0]?.url) {
-      const serverUrl = new URL(data.servers[0].url, hostUrl || "http://localhost");
-      hostUrl = serverUrl.origin; // Parte base (host)
+    let serverUrl = data.servers?.[0]?.url || "";
+
+    // Handle servers.variables
+    const variables = data.servers?.[0]?.variables || {};
+    for (const [key, variable] of Object.entries(variables) as [string, { default?: string; enum?: string[] }][]) {
+      const value = variable.default ?? variable.enum?.[0];
+      if (value) {
+        serverUrl = serverUrl.replace(`{${key}}`, value);
+      }
     }
 
-    const pathName = new URL(data.servers?.[0]?.url || "", hostUrl || "http://localhost").pathname || "";
+    const parsedServerUrl = new URL(serverUrl, hostUrl || "http://localhost");
+    hostUrl = parsedServerUrl.origin;
+    const pathName = parsedServerUrl.pathname;
     const paths = data.paths || {};
     const info = data.info || {};
     const baseUrl = hostUrl || "";
 
     return { baseUrl, pathName, paths, info };
   }
-
 
   throw new Error("Unsupported Swagger/OpenAPI version. Supported versions: 2.0 or 3.0");
 }
