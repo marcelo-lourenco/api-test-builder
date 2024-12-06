@@ -2,6 +2,18 @@
 
 All notable changes to the "api-test-builder" extension will be documented in this file.
 
+## [0.0.5] - 2024-12-06
+
+**Added**
+- Swagger to Cypress (TypeScript)
+- Swagger to Playwright (TypeScript)
+
+## [0.0.4] - 2024-12-04
+
+**Added**
+
+- Conditions to server.variables
+
 ## [0.0.3] - 2024-12-03
 
 **Added**

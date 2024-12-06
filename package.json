@@ -1,8 +1,8 @@
 {
   "name": "api-test-builder",
   "displayName": "API Test Builder",
-  "description": "API Test Script Generator for Playwright, Cypress and others from Swagger documentation",
-  "version": "0.0.4",
+  "description": "API Test Script Generator for Playwright and Cypress from Swagger documentation",
+  "version": "0.0.5",
   "license": "MIT",
   "author": "Marcelo Lourenço <qabi.dev@gmail.com>",
   "engines": {
@@ -62,8 +62,18 @@
   "contributes": {
     "commands": [
       {
-        "command": "apiTestScript.genSwaggerToCypress",
-        "title": "Swagger To Cypress",
+        "command": "apiTestScript.genSwaggerToCypressTs",
+        "title": "Swagger To Cypress (TypeScript)",
+        "group": "apiTestBuilder"
+      },
+      {
+        "command": "apiTestScript.genSwaggerToCypressJs",
+        "title": "Swagger To Cypress (JavaScript)",
+        "group": "apiTestBuilder"
+      },
+      {
+        "command": "apiTestScript.genSwaggerToPlaywrightTs",
+        "title": "Swagger To Playwright (TypeScript)",
         "group": "apiTestBuilder"
       },
       {
@@ -73,17 +83,17 @@
       },
       {
         "command": "apiTestScript.genSwaggerToPlaywrightPy",
-        "title": "Swagger To Playwright (Python)",
+        "title": "Swagger To Playwright (Python) - beta",
         "group": "apiTestBuilder"
       },
       {
         "command": "apiTestScript.genSwaggerToPlaywrightJava",
-        "title": "Swagger To Playwright (Java)",
+        "title": "Swagger To Playwright (Java) - beta",
         "group": "apiTestBuilder"
       },
       {
         "command": "apiTestScript.genSwaggerToPlaywrightDotNet",
-        "title": "Swagger To Playwright (.Net)",
+        "title": "Swagger To Playwright (.Net) - beta",
         "group": "apiTestBuilder"
       }
     ],
@@ -97,24 +107,32 @@
       ],
       "apiTestBuilder": [
         {
-          "command": "apiTestScript.genSwaggerToCypress",
+          "command": "apiTestScript.genSwaggerToCypressTs",
           "group": "2_apiTestBuilder@1"
         },
         {
-          "command": "apiTestScript.genSwaggerToPlaywrightJs",
+          "command": "apiTestScript.genSwaggerToCypressJs",
           "group": "2_apiTestBuilder@2"
         },
         {
-          "command": "apiTestScript.genSwaggerToPlaywrightPy",
+          "command": "apiTestScript.genSwaggerToPlaywrightTs",
           "group": "2_apiTestBuilder@3"
         },
         {
-          "command": "apiTestScript.genSwaggerToPlaywrightJava",
+          "command": "apiTestScript.genSwaggerToPlaywrightJs",
           "group": "2_apiTestBuilder@4"
         },
         {
-          "command": "apiTestScript.genSwaggerToPlaywrightDotNet",
+          "command": "apiTestScript.genSwaggerToPlaywrightPy",
           "group": "2_apiTestBuilder@5"
+        },
+        {
+          "command": "apiTestScript.genSwaggerToPlaywrightJava",
+          "group": "2_apiTestBuilder@6"
+        },
+        {
+          "command": "apiTestScript.genSwaggerToPlaywrightDotNet",
+          "group": "2_apiTestBuilder@7"
         }
       ]
     },

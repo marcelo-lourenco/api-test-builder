@@ -7,11 +7,13 @@ import {
   formatKebabCase
 } from './util';
 import {
-  generateTestScriptContentCypress,
+  generateTestScriptContentCypressJavaScript,
+  generateTestScriptContentCypressTypeScript,
   generateTestScriptContentPlaywrightDotNet,
   generateTestScriptContentPlaywrightJava,
   generateTestScriptContentPlaywrightJavaScript,
-  generateTestScriptContentPlaywrightPhypton
+  generateTestScriptContentPlaywrightPhypton,
+  generateTestScriptContentPlaywrightTypeScript
 } from './generateTestScriptContent';
 
 import { extractPostmanData } from './extractDataPostman';
@@ -26,30 +28,38 @@ async function genTestFileContent(
   methods: Record<string, any>,
   swaggerData: any,
   testFramework: 'playwright' | 'cypress',
-  language: 'javascript' | 'python' | 'java' | '.net' | 'ts',
+  language: 'javascript' | 'typescript' | 'python' | 'java' | '.net',
   fileExtension: string
 ): Promise<string> {
+  const frameworks: Record<string, any> = {
+    playwright: {
+      javascript: generateTestScriptContentPlaywrightJavaScript,
+      typescript: generateTestScriptContentPlaywrightTypeScript,
+      java: generateTestScriptContentPlaywrightJava,
+      '.net': generateTestScriptContentPlaywrightDotNet,
+      python: generateTestScriptContentPlaywrightPhypton,
+    },
+    cypress: {
+      javascript: generateTestScriptContentCypressJavaScript,
+      typescript: generateTestScriptContentCypressTypeScript
+    },
+  };
 
-  if (testFramework === 'playwright' && language === 'javascript') {
-    return generateTestScriptContentPlaywrightJavaScript(baseUrl, pathName, endpointPath, tagName, methods, swaggerData);
+  const frameworkHandler = frameworks[testFramework];
+  if (!frameworkHandler) {
+    throw new Error(`Unsupported test framework: ${testFramework}`);
   }
 
-  else if (testFramework === 'playwright' && language === 'java') {
-    return generateTestScriptContentPlaywrightJava(baseUrl, pathName, endpointPath, tagName, methods, swaggerData);
+  if (typeof frameworkHandler === 'function') {
+    return frameworkHandler(baseUrl, pathName, endpointPath, tagName, methods, swaggerData);
   }
 
-  else if (testFramework === 'playwright' && language === '.net') {
-    return generateTestScriptContentPlaywrightDotNet(baseUrl, pathName, endpointPath, tagName, methods, swaggerData);
+  const languageHandler = frameworkHandler[language];
+  if (!languageHandler) {
+    throw new Error(`Unsupported language: ${language} for framework: ${testFramework}`);
   }
 
-  else if (testFramework === 'playwright' && language === 'python') {
-    return generateTestScriptContentPlaywrightPhypton(baseUrl, pathName, endpointPath, tagName, methods, swaggerData);
-  }
-
-  else if (testFramework === 'cypress') {
-    return generateTestScriptContentCypress(baseUrl, pathName, endpointPath, tagName, methods, swaggerData);
-  }
-  throw new Error(`Unsupported test framework: ${testFramework}`);
+  return languageHandler(baseUrl, pathName, endpointPath, tagName, methods, swaggerData);
 }
 
 
@@ -85,7 +95,10 @@ function createDirectory(dir: string) {
 }
 
 // Function to process the file
-async function processFile(uri: vscode.Uri, data: string, framework: 'playwright' | 'cypress', language: 'javascript' | 'python' | 'java' | '.net' | 'ts', fileExtension: string, processDataFunc: (data: any) => { baseUrl: string; pathName: string; paths: any; info: any }): Promise<string[]> {
+async function processFile(
+  uri: vscode.Uri, data: string, framework: 'playwright' | 'cypress', language: 'javascript' | 'typescript' | 'python' | 'java' | '.net',
+  fileExtension: string, processDataFunc: (data: any) => { baseUrl: string; pathName: string; paths: any; info: any }
+): Promise<string[]> {
   vscode.window.showInformationMessage(`Started creating scripts for ${firstToUppercase(framework)}.`);
 
   const suffix = {
@@ -136,7 +149,10 @@ async function processFile(uri: vscode.Uri, data: string, framework: 'playwright
 export function activate(context: vscode.ExtensionContext) {
   console.log('Congratulations, your extension "API Test Builder" is now active!');
 
-  const registerCommand = (command: string, framework: 'playwright' | 'cypress', language: 'javascript' | 'python' | 'java' | '.net' | 'ts', fileExtension: string, processDataFunc: (data: any) => { baseUrl: string; pathName: string; paths: any; info: any }) => {
+  const registerCommand = (
+    command: string, framework: 'playwright' | 'cypress', language: 'javascript' | 'typescript' | 'python' | 'java' | '.net',
+    fileExtension: string, processDataFunc: (data: any) => { baseUrl: string; pathName: string; paths: any; info: any }
+  ) => {
     const disposable = vscode.commands.registerCommand(command, async (uri: vscode.Uri) => {
       const filePath = uri.fsPath;
       try {
@@ -154,12 +170,13 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   // comands to vscode
-  registerCommand("apiTestScript.genSwaggerToPlaywright", 'playwright', 'javascript', 'ts', (data: any) => extractSwaggerData(data));
+  registerCommand("apiTestScript.genSwaggerToPlaywrightTs", 'playwright', 'typescript', 'ts', (data: any) => extractSwaggerData(data));
   registerCommand("apiTestScript.genSwaggerToPlaywrightJs", 'playwright', 'javascript', 'js', (data: any) => extractSwaggerData(data));
   registerCommand("apiTestScript.genSwaggerToPlaywrightPy", 'playwright', 'python', 'py', (data: any) => extractSwaggerData(data));
   registerCommand("apiTestScript.genSwaggerToPlaywrightJava", 'playwright', 'java', 'java', (data: any) => extractSwaggerData(data));
   registerCommand("apiTestScript.genSwaggerToPlaywrightDotNet", 'playwright', '.net', 'cs', (data: any) => extractSwaggerData(data));
-  registerCommand("apiTestScript.genSwaggerToCypress", 'cypress', 'javascript', 'js', (data: any) => extractSwaggerData(data));
+  registerCommand("apiTestScript.genSwaggerToCypressTs", 'cypress', 'typescript', 'ts', (data: any) => extractSwaggerData(data));
+  registerCommand("apiTestScript.genSwaggerToCypressJs", 'cypress', 'javascript', 'js', (data: any) => extractSwaggerData(data));
   registerCommand("apiTestScript.genPostmanToPlaywright", 'playwright', 'javascript', 'ts', (data: any) => extractPostmanData(data));
   registerCommand("apiTestScript.genPostmanToCypress", 'cypress', 'javascript', 'js', (data: any) => extractPostmanData(data));
 }

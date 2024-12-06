@@ -1,4 +1,3 @@
-
 # API Test Builder - VS Code Extension
 
 ## API Test Script Generator
@@ -16,19 +15,14 @@ Automatically generate API Test Scripts for **Playwright** and **Cypress** from 
 2. **Right-click** anywhere in the code editor;
 3. Click the **API Test Builder** menu;
 4. Click the desired option;
-    - **Swagger to Cypress (JavaScript)**
-    - **Swagger to Playwright (JavaScript)**
-    - **Swagger to Playwright (Java)**  \*beta
-    - **Swagger to Playwright (Python)** \*beta
-    - **Swagger to Playwright (.Net)** \*beta
+    - **Swagger to Cypress**
+    - **Swagger to Playwright**
 5. *Voilà*! The extension will generate the directories and test script templates.
 All you need to do is adjust the indentation and add the test scenarios you want/need.
 
-> **Beta version*
-> - Java - requires proper definition of "import"
-> - .Net - requires proper definition of "using"
-> - Python - requires proper definition of "import"
-> - all - requires proper indentation
+## known issues
+- Requires proper indentation
+- Playwright. Requires proper definition of "import" (Java and Python) and "using" (.Net)
 
 **Help us improve. [Report a Issue](https://github.com/marcelo-lourenco/api-test-builder/issues).**
 
