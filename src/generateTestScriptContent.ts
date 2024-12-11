@@ -23,6 +23,7 @@ export function resolveSchemaReferences(swaggerData: any, schema: any): any {
     return {};
   }
 }
+
 // Function to build examples based on the schema
 export function buildExampleFromSchema(schema: any): any {
   const example: any = {};
@@ -36,152 +37,148 @@ export function buildExampleFromSchema(schema: any): any {
 // Function to get default values based on type
 export function getDefaultValueForType(property: any): any {
   switch (property.type) {
-    case "integer":
-      return 12345;
-    case "number":
-      return 123.45;
-    case "boolean":
-      return true;
+    case "integer": return 12345;
+    case "number": return 123.45;
+    case "boolean": return true;
     case "string":
-      if (property.format && property.format === 'date') {
-        return new Date().toISOString().split('T')[0];
-      } else if (property.format && property.format === 'date-time') {
-        return new Date().toISOString();
-      }
-      return "example";
-    case "array":
-      return property.items ? [getDefaultValueForType(property.items)] : [];
-    default:
-      return "example";
+      return property.format === "date"
+        ? new Date().toISOString().split("T")[0]
+        : property.format === "date-time"
+          ? new Date().toISOString()
+          : "example";
+    case "array": return property.items ? [getDefaultValueForType(property.items)] : [];
+    default: return "example";
   }
 }
 
-// Function to generate Cypress test content
-export async function generateTestScriptContentCypressJavaScript(
+function resolveParameters(details: any, swaggerData: any) {
+  if (!details?.parameters) {
+    return "";
+  }
+
+  const pathParams = details.parameters?.filter((param : any) => param.in === "path");
+  return pathParams.map((param: any) => {
+    const resolvedSchema = resolveSchemaReferences(swaggerData, param.schema || {});
+    const value = resolvedSchema.example || getDefaultValueForType(resolvedSchema);
+    return `${param.name}: ${JSON.stringify(value)}`;
+  }).join(", ") || "";
+}
+
+function resolveHeaders(details: any, swaggerData: any) {
+  if (!details?.parameters) {
+    return "";
+  }
+  const headerParams = details.parameters.filter((param : any) => param.in === "header");
+  return headerParams.map((header: any) => {
+    const resolvedHeader = resolveSchemaReferences(swaggerData, header.schema || {});
+    const value = resolvedHeader.example || getDefaultValueForType(resolvedHeader);
+    return `${header.name}: \"${value}\"`;
+  })
+  .join(", ");
+}
+
+function resolveRequestBodyContent(details: any, swaggerData: any): string {
+  if (!details.requestBody?.content) {
+    return "";
+  };
+  const contentType = Object.keys(details.requestBody.content)[0];
+  const schema = resolveSchemaReferences(swaggerData, details.requestBody.content[contentType]?.schema || {});
+  const example = schema.example || buildExampleFromSchema(schema);
+  return example ? JSON.stringify(example, null, 8) : "";
+}
+
+function resolveResponseExample(details: any) {
+  return details.responses?.["200"]?.content
+    ? details.responses["200"].content[Object.keys(details.responses["200"].content)[0]]?.example
+    : undefined;
+}
+
+
+export async function generateContentCypressJavaScript(
   baseUrl: string, pathName: string, endpointPath: string, tagName: string, methods: Record<string, any>, swaggerData: any
 ): Promise<string> {
-  const testCases = await Promise.all(Object.entries(methods).map(async ([method, details]: [string, any]) => {
-    const parametersObject = (details.parameters || []).reduce((acc: Record<string, any>, param: any) => {
-      acc[param.name] = param.value || '';
-      return acc;
-    }, {});
-    const parameters = JSON.stringify(parametersObject, null, 8);
-
-    // Handle request body
-    let requestBodyContent = "";
-    if (details.requestBody && details.requestBody.content) {
-      const contentType = Object.keys(details.requestBody.content)[0];
-      const schema = resolveSchemaReferences(swaggerData, details.requestBody.content[contentType].schema || {});
-      const example = schema.example || buildExampleFromSchema(schema);
-
-      requestBodyContent = example ? `${JSON.stringify(example, null, 8)}` : "";
-    }
-
-    // Handle response example
-    const responseExample = details.responses && details.responses["200"] && details.responses["200"].content
-      ? details.responses["200"].content[Object.keys(details.responses["200"].content)[0]].example
-      : undefined;
-
+  const testCases = await Promise.all(Object.entries(methods).map(async ([method, details]) => {
+    const headers = resolveHeaders(details, swaggerData);
+    const parameters = resolveParameters(details, swaggerData);
+    const requestBodyContent = resolveRequestBodyContent(details, swaggerData);
+    const responseExample = resolveResponseExample(details);
     return `
   it('${method.toUpperCase()}: Should return success', () => {
-    cy.${method.toLowerCase()}(\`\${endPoint}\`, {
-      qs: ${parameters}${requestBodyContent ? `,
-      body: ${requestBodyContent}` : ""}
+    cy.request({
+      method: '${method.toUpperCase()}',
+      url: endPoint,${headers ? `
+      headers: { ${headers} },` : ""}${parameters ? `
+      qs: { ${parameters} },` : ""}${requestBodyContent && requestBodyContent.length > 0 ? `
+      body: ${requestBodyContent},` : ""}
     }).then((response) => {
       expect(response.status).to.eq(200);${responseExample ? `
-      expect(response.body).to.deep.equal(${JSON.stringify(responseExample, null, 2)});` : ""}
+      expect(response.body).to.deep.equal(${JSON.stringify(responseExample, null, 8)});` : ""}
     });
   });`;
-  }));
+  })
+  );
 
   return `/// <reference types="Cypress" />
 const baseUrl = '${baseUrl}';
 const pathName = '${pathName}';
 const pathUrl = '${endpointPath.replace(/{.*?}/g, "example")}';
 const endPoint = \`\${baseUrl}\${pathName}\${pathUrl}\`;
+
 describe('${tagName} ${endpointPath}', () => {
   ${testCases.join("\n")}
 });
 `;
 }
 
-// Function to generate Cypress test content
-export async function generateTestScriptContentCypressTypeScript(
+export async function generateContentCypressTypeScript(
   baseUrl: string, pathName: string, endpointPath: string, tagName: string, methods: Record<string, any>, swaggerData: any
 ): Promise<string> {
-  const testCases = await Promise.all(Object.entries(methods).map(async ([method, details]: [string, any]) => {
-    const parametersObject = (details.parameters || []).reduce((acc: Record<string, any>, param: any) => {
-      acc[param.name] = param.value || '';
-      return acc;
-    }, {});
-    const parameters = JSON.stringify(parametersObject, null, 8);
-
-    // Handle request body
-    let requestBodyContent = "";
-    if (details.requestBody && details.requestBody.content) {
-      const contentType = Object.keys(details.requestBody.content)[0];
-      const schema = resolveSchemaReferences(swaggerData, details.requestBody.content[contentType].schema || {});
-      const example = schema.example || buildExampleFromSchema(schema);
-
-      requestBodyContent = example ? `${JSON.stringify(example, null, 8)}` : "";
-    }
-
-    // Handle response example
-    const responseExample = details.responses && details.responses["200"] && details.responses["200"].content
-      ? details.responses["200"].content[Object.keys(details.responses["200"].content)[0]].example
-      : undefined;
-
+  const testCases = await Promise.all(Object.entries(methods).map(async ([method, details]) => {
+    const headers = resolveHeaders(details, swaggerData);
+    const parameters = resolveParameters(details, swaggerData);
+    const requestBodyContent = resolveRequestBodyContent(details, swaggerData);
+    const responseExample = resolveResponseExample(details);
     return `
   it('${method.toUpperCase()}: Should return success', () => {
-    cy.${method.toLowerCase()}(\`\${endPoint}\`, {
-      qs: ${parameters}${requestBodyContent ? `,
-      body: ${requestBodyContent}` : ""}
+    cy.request({
+      method: '${method.toUpperCase()}',
+      url: endPoint,${headers ? `
+      headers: { ${headers} },` : ""}${parameters ? `
+      qs: { ${parameters} },` : ""}${requestBodyContent && requestBodyContent.length > 0 ? `
+      body: ${requestBodyContent},` : ""}
     }).then((response) => {
       expect(response.status).to.eq(200);${responseExample ? `
-      expect(response.body).to.deep.equal(${JSON.stringify(responseExample, null, 2)});` : ""}
+      expect(response.body).to.deep.equal(${JSON.stringify(responseExample, null, 8)});` : ""}
     });
   });`;
-  }));
+  })
+  );
 
   return `/// <reference types="Cypress" />
 const baseUrl: string = '${baseUrl}';
 const pathName: string = '${pathName}';
-const pathUrl: string = '${endpointPath.replace(/{.*?}/g, 'example')}';
+const pathUrl: string = '${endpointPath.replace(/{.*?}/g, "example")}';
 const endPoint: string = \`\${baseUrl}\${pathName}\${pathUrl}\`;
+
 describe('${tagName} ${endpointPath}', () => {
   ${testCases.join("\n")}
 });
 `;
 }
 
-// Function to generate JavaScript test content for Playwright
-export async function generateTestScriptContentPlaywrightJavaScript(
+export async function generateContentPlaywrightJavaScript(
   baseUrl: string, pathName: string, endpointPath: string, tagName: string, methods: Record<string, any>, swaggerData: any
 ): Promise<string> {
   const testCases = await Promise.all(Object.entries(methods).map(async ([method, details]) => {
-    const parameters = details.parameters?.map((param: any) => {
-      const resolvedSchema = resolveSchemaReferences(swaggerData, param.schema || {});
-      const value = resolvedSchema.example || getDefaultValueForType(resolvedSchema);
-      return `${param.name}: ${JSON.stringify(value)}`;
-    }).join(", ") || "";
-
-    let requestBodyContent = "";
-    if (details.requestBody?.content) {
-      const contentType = Object.keys(details.requestBody.content)[0];
-      const schema = resolveSchemaReferences(swaggerData, details.requestBody.content[contentType]?.schema || {});
-      const example = schema.example || buildExampleFromSchema(schema);
-
-      requestBodyContent = example ? `${JSON.stringify(example, null, 8)}` : "";
-    }
-
-    const responseExample = details.responses?.["200"]?.content
-      ? details.responses["200"].content[Object.keys(details.responses["200"].content)[0]]?.example
-      : undefined;
-
+    const headers = resolveHeaders(details, swaggerData);
+    const parameters = resolveParameters(details, swaggerData);
+    const requestBodyContent = resolveRequestBodyContent(details, swaggerData);
+    const responseExample = resolveResponseExample(details);
     return `
   test('${method.toUpperCase()}: Should return success', async ({ request }) => {
-    const response = await request.${method.toLowerCase()}(\`\${endPoint}\`, {
-      params: { ${parameters} }${requestBodyContent ? `,
+    const response = await request.${method.toLowerCase()}(\`\${endPoint}\`, {${headers ? `
+      headers: { ${headers} },` : ""}${parameters ? `
+      params: { ${parameters} },` : ""}${requestBodyContent && requestBodyContent.length > 0 ? `
       data: ${requestBodyContent}` : ""}
     });
     expect(response.status()).toBe(200);${responseExample ? `
@@ -200,45 +197,25 @@ test.describe('${tagName} ${endpointPath}', () => {${testCases.join("\n")}
 `;
 }
 
-// Function to generate TypeScript test content for Playwright
-export async function generateTestScriptContentPlaywrightTypeScript(
+export async function generateContentPlaywrightTypeScript(
   baseUrl: string, pathName: string, endpointPath: string, tagName: string, methods: Record<string, any>, swaggerData: any
 ): Promise<string> {
-  const testCases = await Promise.all(
-    Object.entries(methods).map(async ([method, details]) => {
-      const parameters = details.parameters
-        ?.map((param: any) => {
-          const resolvedSchema = resolveSchemaReferences(swaggerData, param.schema || {});
-          const value = resolvedSchema.example || getDefaultValueForType(resolvedSchema);
-          return `${param.name}: ${JSON.stringify(value)}`;
-        })
-        .join(", ") || "";
-
-      let requestBodyContent = "";
-      if (details.requestBody?.content) {
-        const contentType = Object.keys(details.requestBody.content)[0];
-        const schema = resolveSchemaReferences(swaggerData, details.requestBody.content[contentType]?.schema || {});
-        const example = schema.example || buildExampleFromSchema(schema);
-
-        requestBodyContent = example ? JSON.stringify(example, null, 8) : "";
-      }
-
-      const responseExample = details.responses?.["200"]?.content
-        ? details.responses["200"].content[Object.keys(details.responses["200"].content)[0]]?.example
-        : undefined;
-
-      return `
+  const testCases = await Promise.all(Object.entries(methods).map(async ([method, details]) => {
+    const headers = resolveHeaders(details, swaggerData);
+    const parameters = resolveParameters(details, swaggerData);
+    const requestBodyContent = resolveRequestBodyContent(details, swaggerData);
+    const responseExample = resolveResponseExample(details);
+    return `
   test('${method.toUpperCase()}: Should return success', async ({ request }) => {
-    const response = await request.${method.toLowerCase()}(\`\${endPoint}\`, {
-      params: { ${parameters} }${requestBodyContent ? `,
-      data: ${requestBodyContent}` : ""
-        }
+    const response = await request.${method.toLowerCase()}(\`\${endPoint}\`, {${headers ? `
+      headers: { ${headers} },` : ""}${parameters ? `
+      params: { ${parameters} },` : ""}${requestBodyContent && requestBodyContent.length > 0 ? `
+      data: ${requestBodyContent}` : ""}
     });
     expect(response.status()).toBe(200);${responseExample ? `
-    expect(await response.json()).toEqual(${JSON.stringify(responseExample, null, 2)});` : ""
-        }
+    expect(await response.json()).toEqual(${JSON.stringify(responseExample, null, 2)});` : ""}
   });`;
-    })
+  })
   );
 
   return `import { test, expect } from '@playwright/test';
@@ -252,32 +229,20 @@ test.describe('${tagName} ${endpointPath}', () => {${testCases.join("\n")}
 `;
 }
 
-// Function to generate .Net test content for Playwright
-export async function generateTestScriptContentPlaywrightDotNet(
+export async function generateContentPlaywrightDotNet(
   baseUrl: string, pathName: string, endpointPath: string, tagName: string, methods: Record<string, any>, swaggerData: any
 ): Promise<string> {
   const testCases = await Promise.all(Object.entries(methods).map(async ([method, details]: [string, any]) => {
-    const parameters = details.parameters ? details.parameters.map((param: any) => {
-      const resolvedSchema = resolveSchemaReferences(swaggerData, param.schema || {});
-      const value = resolvedSchema.example || getDefaultValueForType(resolvedSchema);
-      return `${param.name}={${value}}`;
-    }).join("&") : "";
+     const parameters = resolveParameters(details, swaggerData)
+      .split(", ") // Splits the parameters in the format "name: value"
+      .map((param: string) => { // Defines the type of `param` as a string
+        const [name, value] = param.split(": "); // Separates the name from the value
+        return `${name}={${value}}`; // Formats the parameter as "name={value}"
+      })
+      .join("&"); // Joins the parameters with "&"
 
-    // Handling Request Body
-    let requestBodyContent = "";
-    if (details.requestBody && details.requestBody.content) {
-      const contentType = Object.keys(details.requestBody.content)[0];
-      const schema = resolveSchemaReferences(swaggerData, details.requestBody.content[contentType].schema || {});
-      const example = schema.example || buildExampleFromSchema(schema);
-
-      requestBodyContent = example ? JSON.stringify(example, null, 8) : "";
-    }
-
-    // Handling Response Example
-    const responseExample = details.responses && details.responses["200"] && details.responses["200"].content
-      ? details.responses["200"].content[Object.keys(details.responses["200"].content)[0]].example
-      : undefined;
-
+    const requestBodyContent = resolveRequestBodyContent(details, swaggerData);
+    const responseExample = resolveResponseExample(details);
     return `[TestMethod]
   public async Task Test${firstToUppercase(method)}Async() {
     using (var client = new HttpClient()) {
@@ -316,34 +281,21 @@ public class Test${formatPascalCase(tagName)} {
 }`;
 }
 
-// Function to generate Java test content for Playwright
-export async function generateTestScriptContentPlaywrightJava(
+export async function generateContentPlaywrightJava(
   baseUrl: string, pathName: string, endpointPath: string, tagName: string, methods: Record<string, any>, swaggerData: any
 ): Promise<string> {
   const testCases = await Promise.all(Object.entries(methods).map(async ([method, details]: [string, any]) => {
 
-    // Handling Parameters
-    const parameters = details.parameters ? details.parameters.map((param: any) => {
-      const resolvedSchema = resolveSchemaReferences(swaggerData, param.schema || {});
-      const value = resolvedSchema.example || getDefaultValueForType(resolvedSchema);
-      return `request.addQueryParam("${param.name}", "${value}");`;
-    }).join("\n    ") : "";
+    const parameters = resolveParameters(details, swaggerData)
+      .split(", ") // Splits the parameters in the format "name: value"
+      .map((param: string) => { // Defines the type of `param` as a string
+        const [name, value] = param.split(": "); // Separates the name from the value
+        return `request.addQueryParam("${name}", ${value});`; // Formats as a query parameter
+      })
+      .join("\n"); // Joins with line breaks and indentation
 
-    // Handling Request Body
-    let requestBodyContent = "";
-    if (details.requestBody && details.requestBody.content) {
-      const contentType = Object.keys(details.requestBody.content)[0];
-      const schema = resolveSchemaReferences(swaggerData, details.requestBody.content[contentType].schema || {});
-      const example = schema.example || buildExampleFromSchema(schema);
-
-      requestBodyContent = example ? JSON.stringify(example, null, 8) : "";
-    }
-
-    // Handling Response Example
-    const responseExample = details.responses && details.responses["200"] && details.responses["200"].content
-      ? details.responses["200"].content[Object.keys(details.responses["200"].content)[0]].example
-      : undefined;
-
+    const requestBodyContent = resolveRequestBodyContent(details, swaggerData);
+    const responseExample = resolveResponseExample(details);
     return `@Test
   public void test${method.toUpperCase()}() throws Exception {
     HttpRequest request = HttpRequest.newBuilder()
@@ -394,30 +346,20 @@ public class Test${formatPascalCase(tagName)} {
 }`;
 }
 
-// Function to generate Python test content for Playwright
-export async function generateTestScriptContentPlaywrightPhypton(
+export async function generateContentPlaywrightPhypton(
   baseUrl: string, pathName: string, endpointPath: string, tagName: string, methods: Record<string, any>, swaggerData: any
 ): Promise<string> {
   const testCases = await Promise.all(Object.entries(methods).map(async ([method, details]) => {
-    const parameters = details.parameters?.map((param: any) => {
-      const resolvedSchema = resolveSchemaReferences(swaggerData, param.schema || {});
-      const value = resolvedSchema.example || getDefaultValueForType(resolvedSchema);
-      return `'${param.name}': ${JSON.stringify(value)}`;
-    }).join(", ") || "";
+    const parameters = resolveParameters(details, swaggerData)
+    .split(", ") // Splits the parameters in the format "name: value"
+    .map((param: string) => { // Defines the type of `param` as a string
+      const [name, value] = param.split(": "); // Separates the name from the value
+      return `'${name}': ${value}`; // Formats as `'name': value`
+    })
+    .join(", ") || ""; // Joins the parameters with ", " or returns an empty string
 
-    let requestBodyContent = "";
-    if (details.requestBody?.content) {
-      const contentType = Object.keys(details.requestBody.content)[0];
-      const schema = resolveSchemaReferences(swaggerData, details.requestBody.content[contentType]?.schema || {});
-      const example = schema.example || buildExampleFromSchema(schema);
-
-      requestBodyContent = example ? `${JSON.stringify(example, null, 8)}` : "";
-    }
-
-    const responseExample = details.responses?.["200"]?.content
-      ? details.responses["200"].content[Object.keys(details.responses["200"].content)[0]]?.example
-      : undefined;
-
+    const requestBodyContent = resolveRequestBodyContent(details, swaggerData);
+    const responseExample = resolveResponseExample(details);
     return `
 def test_${method.toLowerCase()}_success(playwright):
     with playwright.request.new_context() as context:

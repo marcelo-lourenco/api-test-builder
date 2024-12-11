@@ -7,13 +7,13 @@ import {
   formatKebabCase
 } from './util';
 import {
-  generateTestScriptContentCypressJavaScript,
-  generateTestScriptContentCypressTypeScript,
-  generateTestScriptContentPlaywrightDotNet,
-  generateTestScriptContentPlaywrightJava,
-  generateTestScriptContentPlaywrightJavaScript,
-  generateTestScriptContentPlaywrightPhypton,
-  generateTestScriptContentPlaywrightTypeScript
+  generateContentCypressJavaScript,
+  generateContentCypressTypeScript,
+  generateContentPlaywrightDotNet,
+  generateContentPlaywrightJava,
+  generateContentPlaywrightJavaScript,
+  generateContentPlaywrightPhypton,
+  generateContentPlaywrightTypeScript
 } from './generateTestScriptContent';
 
 import { extractPostmanData } from './extractDataPostman';
@@ -33,15 +33,15 @@ async function genTestFileContent(
 ): Promise<string> {
   const frameworks: Record<string, any> = {
     playwright: {
-      javascript: generateTestScriptContentPlaywrightJavaScript,
-      typescript: generateTestScriptContentPlaywrightTypeScript,
-      java: generateTestScriptContentPlaywrightJava,
-      '.net': generateTestScriptContentPlaywrightDotNet,
-      python: generateTestScriptContentPlaywrightPhypton,
+      javascript: generateContentPlaywrightJavaScript,
+      typescript: generateContentPlaywrightTypeScript,
+      java: generateContentPlaywrightJava,
+      '.net': generateContentPlaywrightDotNet,
+      python: generateContentPlaywrightPhypton,
     },
     cypress: {
-      javascript: generateTestScriptContentCypressJavaScript,
-      typescript: generateTestScriptContentCypressTypeScript
+      javascript: generateContentCypressJavaScript,
+      typescript: generateContentCypressTypeScript
     },
   };
 

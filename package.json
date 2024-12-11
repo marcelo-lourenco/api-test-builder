@@ -2,7 +2,7 @@
   "name": "api-test-builder",
   "displayName": "API Test Builder",
   "description": "API Test Script Generator for Playwright and Cypress from Swagger documentation",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "license": "MIT",
   "author": "Marcelo Lourenço <qabi.dev@gmail.com>",
   "engines": {

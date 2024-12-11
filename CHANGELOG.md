@@ -2,9 +2,17 @@
 
 All notable changes to the "api-test-builder" extension will be documented in this file.
 
+## [0.0.6] - 2024-12-11
+
+**Added**
+
+- Headers (Cypress and Playwright)
+- Request body examples (Cypress and Playwright)
+
 ## [0.0.5] - 2024-12-06
 
 **Added**
+
 - Swagger to Cypress (TypeScript)
 - Swagger to Playwright (TypeScript)
 
