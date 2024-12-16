@@ -2,6 +2,12 @@
 
 All notable changes to the "api-test-builder" extension will be documented in this file.
 
+## [0.0.7] - 2024-12-12
+
+**Added**
+
+- pathParams and queryParams
+
 ## [0.0.6] - 2024-12-11
 
 **Added**

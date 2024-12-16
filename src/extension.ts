@@ -20,7 +20,7 @@ import { extractPostmanData } from './extractDataPostman';
 import { extractSwaggerData } from './extractDataSwagger';
 
 // Refactored main function to delegate content generation
-async function genTestFileContent(
+export async function genTestFileContent(
   baseUrl: string,
   pathName: string,
   endpointPath: string,
@@ -64,7 +64,7 @@ async function genTestFileContent(
 
 
 // Function to confirm and delete the main directory
-async function confirmAndDeleteRootDir(rootDir: string): Promise<boolean> {
+export async function confirmAndDeleteRootDir(rootDir: string): Promise<boolean> {
   if (!fs.existsSync(rootDir)) {
     return true; // Directory doesn't exist, proceed
   }
@@ -88,14 +88,14 @@ async function confirmAndDeleteRootDir(rootDir: string): Promise<boolean> {
 }
 
 // Function to ensure a directory exists
-function createDirectory(dir: string) {
+export function createDirectory(dir: string) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 }
 
 // Function to process the file
-async function processFile(
+export async function processFile(
   uri: vscode.Uri, data: string, framework: 'playwright' | 'cypress', language: 'javascript' | 'typescript' | 'python' | 'java' | '.net',
   fileExtension: string, processDataFunc: (data: any) => { baseUrl: string; pathName: string; paths: any; info: any }
 ): Promise<string[]> {
