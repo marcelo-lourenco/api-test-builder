@@ -208,7 +208,7 @@ export async function generateContentPlaywrightJavaScript(
   });`;
   }));
 
-  return `import { test, expect } from '@playwright/test';
+  return `import { expect, test } from '@playwright/test';
 const baseUrl = '${baseUrl}';
 const pathName = '${pathName}';
 const pathUrl = '${endpointPath.replace(/{.*?}/g, "example")}';
@@ -241,7 +241,7 @@ export async function generateContentPlaywrightTypeScript(
   });`;
   }));
 
-  return `import { test, expect } from '@playwright/test';
+  return `import { expect, test } from '@playwright/test';
 const baseUrl = '${baseUrl}';
 const pathName = '${pathName}';
 const pathUrl = '${endpointPath.replace(/{.*?}/g, "example")}';

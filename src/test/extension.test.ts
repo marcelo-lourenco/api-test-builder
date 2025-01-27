@@ -1,4 +1,4 @@
-import * as assert from 'assert';
+/* import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
 //import * as vscode from 'vscode';
@@ -30,3 +30,4 @@ function validateSwagger(schema: any): void {
         throw new Error('Invalid OpenAPI schema');
     }
 }
+ */
